@@ -17,8 +17,19 @@
 
 ### 修复 · Fixed
 
-- 修复选2「运行功能」嵌套 exec 时内核函数丢失的问题，改用 `globals()` 透传 `CORE_ENV`
-- 修复 Android/Termux 环境下 `os.replace` 静默失败导致写入不落盘的问题
+两个独立问题叠加，导致"写入看似成功实则失败"的幽灵现象：
+
+**问题一：exec 环境传递不完整**
+- 选2「运行功能」内部 exec 工具功能时用新字典，没有透传 `_atomic_save` 等内核函数，导致嵌套执行时崩溃
+- 修复：选2改用 `globals()` 透传完整的 `CORE_ENV`，所有嵌套 exec 共用同一环境
+
+**问题二：写入机制不稳定**
+- Android/Termux 环境下 `os.replace` 静默失败，数据不落盘，程序显示成功但内容没有写入
+- 修复：改用 `fsync + os.remove + os.rename` 原子写入，强制落盘
+
+### 架构优化 · Architecture
+
+- 将对话记录从 `actions['13']` 迁移到 JSON 顶层 `context_log` 字段，彻底解耦数据与功能结构，确保未来无论功能如何增删，对话记录永远在固定位置
 
 ### 移除 · Removed
 
