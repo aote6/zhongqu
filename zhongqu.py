@@ -131,7 +131,8 @@ def main():
         try:
             # 所有功能代码在 CORE_ENV 环境里执行
             # 功能层可直接使用 _atomic_save、_snap、_log 等内核函数
-            exec(action["code"], CORE_ENV)
+            exec_env = {**CORE_ENV, "data": data, "CORE_ENV": CORE_ENV}
+            exec(action["code"], exec_env)
         except Exception as e:
             print(f"\n❌ 执行出错：{e}")
             print(traceback.format_exc())
