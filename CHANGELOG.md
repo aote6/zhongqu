@@ -1,4 +1,19 @@
 # Changelog
+- 新增：升级版AI上下文（生成AI上下文升级版）
+  - 接入memory_tree，状态树格式替代平铺markdown
+  - 权重可视化（█████ W:1.00）
+  - 关键词激活低权重节点
+  - 主根身份块、对话摘要、校验提示
+- 新增：导入记忆节点功能
+  - 粘贴AI输出的[type] content W:weight格式
+  - 逐条确认，支持y/n/a/s
+  - 写入memory_tree
+- 更新：「存」指令协议
+  - 要求AI同时输出★/↳格式和节点列表
+  - 两棵树同步生长：context_log + memory_tree
+- 修复：t4导出公开版新增清空memory_tree，保护主根个人信息
+- 当前记忆树：17个节点，含boundary/unresolved/decision/fact四种类型
+
 ## v1.2 — 2026-03-15
 **记忆树地基完成 · v1.2**
 
