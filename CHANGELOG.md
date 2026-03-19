@@ -1,3 +1,5 @@
+# Changelog
+
 ## v1.5 — 2026-03-19 · 记忆树分层·上下文密度优化
 
 ### 变更
@@ -18,8 +20,6 @@
 记忆树只存原则和长期决策，其他各归其位：未解决问题→open_issues，AI观察→ai_observations.json，操作记录→context_log。
 
 ---
-
-# Changelog
 
 ## v1.4 — 2026-03-18 · 流程重构与冷热分离
 
