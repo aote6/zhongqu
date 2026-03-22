@@ -15,6 +15,7 @@
 import json
 import os
 import traceback
+import re
 import shutil
 from datetime import datetime
 
@@ -96,6 +97,64 @@ def _today():
     return datetime.now().strftime("%Y-%m-%d")
 
 
+# _parse_memo: 协议层解析工具
+# 从功能代码中提取中枢标准备忘录（@记...@毕格式）
+# 归属内核的理由：备忘录格式是中枢输入协议，不是业务逻辑；
+#   多个功能（添加/修改）都需要解析，统一实现避免重复；
+#   格式变更时只改一处，所有功能自动对齐。
+# 返回值：dict（至少含"需求"键）或 None（无有效备忘录）
+def _parse_memo(code):
+    # 新格式：@记 / @毕
+    m = re.search(r'#\s*@记\s*\n(.*?)#\s*@毕', code, re.DOTALL)
+    if m:
+        block = m.group(1)
+        result = {}
+        for line in block.splitlines():
+            line = line.strip().lstrip("#").strip()
+            if "：" in line:
+                k, _, v = line.partition("：")
+                k = k.strip()
+                if k:
+                    result[k] = v.strip()
+        if result.get("需求"):
+            return result
+    # 兼容旧格式：@AI_MEMO_START / @AI_MEMO_END
+    m = re.search(r'@AI_MEMO_START\s*\n(.*?)@AI_MEMO_END', code, re.DOTALL)
+    if m:
+        block = m.group(1)
+        result = {}
+        for line in block.splitlines():
+            line = line.strip().lstrip("#").strip()
+            if "：" in line:
+                k, _, v = line.partition("：")
+                k = k.strip()
+                if k and k != "功能名称":
+                    result[k] = v.strip()
+        # 字段名映射到新格式
+        mapped = {}
+        field_map = {"原始需求": "需求", "注意事项": "注意", "设计思路": "思路", "后续优化": "优化"}
+        for k, v in result.items():
+            mapped[field_map.get(k, k)] = v
+        if mapped.get("需求"):
+            return mapped
+    # 兼容旧格式：@MEMO 单行
+    m = re.search(r'#\s*@MEMO\s+(.*)', code)
+    if m:
+        result = {}
+        for part in m.group(1).split("|"):
+            part = part.strip()
+            if "：" in part:
+                k, _, v = part.partition("：")
+                k = k.strip()
+                field_map = {"需求": "需求", "原始需求": "需求", "注意事项": "注意", "注意": "注意"}
+                mapped_k = field_map.get(k, k)
+                if mapped_k:
+                    result[mapped_k] = v.strip()
+        if result.get("需求"):
+            return result
+    return None
+
+
 # ==================== 内核执行环境 ====================
 
 # CORE_ENV: 统一执行环境
@@ -117,6 +176,7 @@ CORE_ENV = {
     "_log":          _log,
     "_now":          _now,
     "_today":        _today,
+    "_parse_memo":   _parse_memo,
     "json":          json,
     "os":            os,
     "shutil":        shutil,
