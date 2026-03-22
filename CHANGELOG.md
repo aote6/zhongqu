@@ -1,5 +1,33 @@
 # Changelog
 
+## v2.2 - 2026-03-22 · 架构整固 · 打孔卡原则落地 · 功能层独立验证
+
+### 修复
+- 功能4/7直接写旧log字段→统一改用_log内核函数
+- 功能6/9自实现_save/_load→统一改用_atomic_save
+- 存档正则边界风险→加count=1，末尾匹配安全化
+- 清理历史版本_log返回值未赋回data→修复
+- 路径不一致expanduser("~")混用→全部统一为_base_dir
+- 各功能兜底逻辑try/except NameError→全部清除
+- 硬编码/sdcard/Download→改为/sdcard/Download优先·~/Downloads兜底
+- 导出路径../Download在Termux无效→改为/sdcard/Download直接寻址
+- 架构
+- _parse_memo误入内核→移回功能层各自定义
+- _snap误入业务知识(packs备份)→还原为只备份json·packs备份归快照管理功能自主决定
+- re误入CORE_ENV→移出
+- SYSTEM_KEYS提取为常量→注入_SYSTEM_KEYS·功能层统一引用
+- operation_log加300条轮转上限·超出自动截断
+- 存档加写入后验证·读回确认关键块存在·不再静默跳过
+- 快照管理功能自主决定同时备份packs/·恢复时同步还原
+- 版本号VERSION∈zhongqu.py唯一维护·banner自动同步
+- 协议
+- 固定层新增【工程原则·固定】：先有框架再动手·框架内解决问题
+- 固定层新增【打孔卡哲学·固定】：内核/JSON边界定义·判断标准·路径写入版本规范
+- 中枢信息更新：加入功能职责边界定义(存/库/快照三者关系)
+- 19个功能独立性验证通过：无互相嵌套·无逻辑冲突·内核零业务概念
+
+---
+
 ## v2.1 - 2026-03-21 · AI自留区实装 · 存档四步流程 · 协议补全
 - 新增
 - 存档加入第四步：AI自留区输入，写入 ~/packs/ai_notes.md，追加不覆盖
