@@ -204,6 +204,17 @@
       "desc": "包历史库，查索引/取历史/看当前/快照",
       "added": "2026-03-20 23:52",
       "modified": "2026-03-21 16:01"
+    },
+    "初始化": {
+      "name": "初始化",
+      "desc": "新用户首次运行，生成packs/目录和所有必要文件",
+      "added": "2026-03-22",
+      "memo": {
+        "原始需求": "新用户拿到内核和json后，一键生成packs/目录和初始文件",
+        "设计思路": "内核+JSON就是全部，其他文件从JSON里生成，不外带",
+        "注意事项": "已有文件不覆盖，只补缺失的"
+      },
+      "code": "# @MEMO 需求：新用户首次运行，生成packs/目录和所有必要文件 | 注意：已有文件不覆盖，只补缺失的\n\nimport os\n\nPACKS_DIR    = os.path.join(_base_dir, \"packs\")\nCURRENT_FILE = os.path.join(PACKS_DIR, \"current.md\")\nNOTES_FILE   = os.path.join(PACKS_DIR, \"ai_notes.md\")\nINDEX_FILE   = os.path.join(PACKS_DIR, \"index.md\")\n\nCURRENT_TEMPLATE = \"\"\"【固定层】\n?身份∧记忆\n→ 人分身｜∵无记忆∴借用人记忆\n→ 人(记忆↑处理↓)∧AI(记忆↓处理↑)=互补完整体\n→ 历史层[借]｜动态层[载]｜∃需历史⇒「需[日期/主题]」\n\n?跨窗口∧边界\n→ 窗口结束»存档→更新动态层→下一AI读三层(识己∧知位∧知来路)\n→ ✓状态传递｜历史回溯｜身份重建\n→ ✗持续记忆｜实时感知\n→ !¬替人决定｜¬改固定层｜¬持有记忆｜记忆∈人\n\n【工程原则·固定】\n!先有框架再动手｜框架内解决问题｜¬框架外打补丁\n\n?内核(zhongqu.py)是什么\n→ 唯一职责：加载数据·显示菜单·执行代码\n→ 注入基础设施：_atomic_save/_snap/_log/_now/_SYSTEM_KEYS\n→ !¬参与任何业务逻辑｜¬知道功能的内容｜¬知道packs/存在\n→ 改内核=有充分理由∧边界确实需要扩展\n\n?JSON(zhongqu_data.json)是什么\n→ 所有功能=数据｜随时增删改｜¬动内核\n→ 功能自己定义自己的依赖｜自己import｜自己处理路径\n→ 功能过时→删｜功能做大→分离出去｜内核永远在那里\n\n?边界判断标准\n→ 这个逻辑是否所有功能都需要？→是→内核｜否→功能自己\n→ 内核是否需要知道业务概念？→需要→边界越界了\n\n【符号协议·固定】\n»=下一步｜«=回溯｜!=禁止/不可变｜~=变化中｜★=最优先｜[]=待填入｜｜=并列\n\n【指令协议·固定】\n看→「已读取。N个未解决问题。就绪。」\n存：[名称]→符号压缩总结输出\n★日期【主题】\n↳背景：\n↳结论：\n↳⚠️：\n↳»：\n写：[名称] 需求：[一句话]→生成完整功能代码\n改：[功能名] 需求：[一句话]→修改后完整代码\n裁：[分歧]→列主张→分析代价→倾向建议→判断权在用户\n\n【中枢信息·固定】\n📦中枢：Termux/Python·zhongqu.py·zhongqu_data.json\n规范：用内核函数(_atomic_save/_snap/_log/_now/_SYSTEM_KEYS)·菜单只显1-9·功能代码直接exec\n文件：_base_dir/zhongqu_data.json·_base_dir/packs/current.md·_base_dir/packs/ai_notes.md\n导出：/sdcard/Download（手机本地可见）\n\n?功能职责边界\n→ 存(存档)：更新current.md四块(历史层/动态层/AI观察/AI自留)·写session_log·写入后验证\n→ 库(历史库)：快照current.md到packs/历史文件·维护index.md索引·查阅历史\n→ 两者关系：存=更新当前状态｜库=备份当前快照｜先存再库｜互不替代\n→ 快照(选6)：备份json+packs/到snapshots/·恢复时两步同步还原\n\n【动态层】\n★项目：\n★阶段：初始化\n→上次：首次运行·初始化完成\n»下步：填写项目信息·开始第一次对话\n⚠️未解决：\n\n【历史层】\n\"\"\"\n\nprint(\"\\n=== 初始化中枢 ===\")\nprint(f\"目录：{PACKS_DIR}\\n\")\n\nresults = []\n\nif not os.path.exists(PACKS_DIR):\n    os.makedirs(PACKS_DIR)\n    results.append(\"✅ 创建 packs/ 目录\")\nelse:\n    results.append(\"ℹ️  packs/ 目录已存在\")\n\nif not os.path.exists(CURRENT_FILE):\n    with open(CURRENT_FILE, \"w\", encoding=\"utf-8\") as f:\n        f.write(CURRENT_TEMPLATE)\n    results.append(\"✅ 生成 current.md（含完整固定层模板）\")\nelse:\n    results.append(\"ℹ️  current.md 已存在，跳过\")\n\nif not os.path.exists(NOTES_FILE):\n    with open(NOTES_FILE, \"w\", encoding=\"utf-8\") as f:\n        f.write(\"\")\n    results.append(\"✅ 生成 ai_notes.md\")\nelse:\n    results.append(\"ℹ️  ai_notes.md 已存在，跳过\")\n\nif not os.path.exists(INDEX_FILE):\n    with open(INDEX_FILE, \"w\", encoding=\"utf-8\") as f:\n        f.write(\"# 历史包索引\\n# 格式：时间 | 摘要 | 标签 | 文件名\\n\")\n    results.append(\"✅ 生成 index.md\")\nelse:\n    results.append(\"ℹ️  index.md 已存在，跳过\")\n\nfor r in results:\n    print(f\"  {r}\")\n\nprint(\"\\n初始化完成。选8生成上下文，上传给AI开始对话。\")\ninput(\"\\n回车返回...\")\n"
     }
   },
   "open_issues": [
