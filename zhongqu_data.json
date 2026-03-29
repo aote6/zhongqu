@@ -79,12 +79,23 @@
     },
     "7": {
       "name": "说明",
-      "desc": "使用说明与初始化",
-      "code": "\n# @记\n# 需求：中枢使用说明，含初始化入口\n# 注意：文字类内容统一放这里，不依赖外部文档\n# @毕\n\nimport os\n\nCURRENT_FILE = os.path.join(_base_dir, \"packs\", \"current.md\")\n\nprint(\"\"\"\n╔══════════════════════════════════════════╗\n║           工具中枢 · 使用说明            ║\n╠══════════════════════════════════════════╣\n║                                          ║\n║  【首次使用】                            ║\n║    选 i  →  初始化，生成必要文件         ║\n║    选 8  →  导出上下文，上传给AI         ║\n║                                          ║\n║  【日常使用】                            ║\n║    对话结束  →  存档（工具功能）         ║\n║    选 8     →  导出上下文给下一个AI      ║\n║                                          ║\n║  【功能管理】                            ║\n║    选 1  →  添加新功能                   ║\n║    选 3  →  修改功能                     ║\n║    选 4  →  删除功能                     ║\n║                                          ║\n║  【备份恢复】                            ║\n║    选 6  →  快照管理                     ║\n║                                          ║\n║  【备忘录格式】                          ║\n║    # @记                                 ║\n║    # 需求：xxx                           ║\n║    # 注意：xxx                           ║\n║    # @毕                                 ║\n║                                          ║\n╚══════════════════════════════════════════╝\n\"\"\")\n\nalready_init = os.path.exists(CURRENT_FILE)\nif already_init:\n    print(\"  ✅ 系统已初始化（current.md 存在）\")\nelse:\n    print(\"  ⚠️  检测到未初始化（current.md 不存在）\")\n\nprint()\nc = input(\"  输入 i 执行初始化，回车跳过：\").strip().lower()\n\nif c == \"i\":\n    PACKS_DIR  = os.path.join(_base_dir, \"packs\")\n    NOTES_FILE = os.path.join(PACKS_DIR, \"ai_notes.md\")\n    INDEX_FILE = os.path.join(PACKS_DIR, \"index.md\")\n\n    CURRENT_TEMPLATE = \"\"\"【固定层】\n?身份∧记忆\n→ 人分身｜∵无记忆∴借用人记忆\n→ 人(记忆↑处理↓)∧AI(记忆↓处理↑)=互补完整体\n→ 历史层[借]｜动态层[载]｜∃需历史⇒「需[日期/主题]」\n\n?跨窗口∧边界\n→ 窗口结束»存档→更新动态层→下一AI读三层(识己∧知位∧知来路)\n→ ✓状态传递｜历史回溯｜身份重建\n→ ✗持续记忆｜实时感知\n→ !¬替人决定｜¬改固定层｜¬持有记忆｜记忆∈人\n\n【工程原则·固定】\n!先有框架再动手｜框架内解决问题｜¬框架外打补丁\n\n?内核(zhongqu.py)是什么\n→ 唯一职责：加载数据·显示菜单·执行代码\n→ 注入基础设施：_atomic_save/_snap/_log/_now/_SYSTEM_KEYS/_parse_memo\n→ !¬参与任何业务逻辑｜¬知道功能的内容\n→ 改内核=有充分理由∧边界确实需要扩展\n\n?JSON(zhongqu_data.json)是什么\n→ 所有功能=数据｜随时增删改｜¬动内核\n→ 功能自己定义自己的依赖｜自己import｜自己处理路径\n→ 功能过时→删｜功能做大→分离出去｜内核永远在那里\n\n?边界判断标准\n→ 这个逻辑是否所有功能都需要？→是→内核｜否→功能自己\n→ 内核是否需要知道业务概念？→需要→边界越界了\n\n【符号协议·固定】\n»=下一步｜«=回溯｜!=禁止/不可变｜~=变化中｜★=最优先｜[]=待填入｜｜=并列\n\n【指令协议·固定】\n看→「已读取。N个未解决问题。就绪。」\n存：[名称]→符号压缩总结输出\n★日期【主题】\n↳背景：\n↳结论：\n↳⚠️：\n↳»：\n写：[名称] 需求：[一句话]→生成完整功能代码\n改：[功能名] 需求：[一句话]→修改后完整代码\n裁：[分歧]→列主张→分析代价→倾向建议→判断权在用户\n\n【中枢信息·固定】\n📦中枢：Termux/Python·zhongqu.py·zhongqu_data.json\n规范：用内核函数(_atomic_save/_snap/_log/_now/_SYSTEM_KEYS/_parse_memo)·菜单只显1-9·功能代码直接exec\n文件：_base_dir/zhongqu_data.json·_base_dir/packs/current.md·_base_dir/packs/ai_notes.md\n导出：/sdcard/Download（手机本地可见）\n\n?功能职责边界\n→ 存(存档)：更新current.md四块(历史层/动态层/AI观察/AI自留)·写session_log·写入后验证\n→ 库(历史库)：快照current.md到packs/历史文件·维护index.md索引·查阅历史\n→ 两者关系：存=更新当前状态｜库=备份当前快照｜先存再库｜互不替代\n→ 快照(选6)：备份json+packs/到snapshots/·恢复时两步同步还原\n\n【动态层】\n★项目：\n★阶段：初始化\n→上次：首次运行·初始化完成\n»下步：填写项目信息·开始第一次对话\n⚠️未解决：\n\n【历史层】\n\"\"\"\n\n    results = []\n    if not os.path.exists(PACKS_DIR):\n        os.makedirs(PACKS_DIR)\n        results.append(\"✅ 创建 packs/ 目录\")\n    else:\n        results.append(\"ℹ️  packs/ 目录已存在\")\n\n    if not os.path.exists(CURRENT_FILE):\n        with open(CURRENT_FILE, \"w\", encoding=\"utf-8\") as f:\n            f.write(CURRENT_TEMPLATE)\n        results.append(\"✅ 生成 current.md\")\n    else:\n        results.append(\"ℹ️  current.md 已存在，跳过\")\n\n    if not os.path.exists(NOTES_FILE):\n        with open(NOTES_FILE, \"w\", encoding=\"utf-8\") as f:\n            f.write(\"\")\n        results.append(\"✅ 生成 ai_notes.md\")\n    else:\n        results.append(\"ℹ️  ai_notes.md 已存在，跳过\")\n\n    if not os.path.exists(INDEX_FILE):\n        with open(INDEX_FILE, \"w\", encoding=\"utf-8\") as f:\n            f.write(\"# 历史包索引\\n# 格式：时间 | 摘要 | 标签 | 文件名\\n\")\n        results.append(\"✅ 生成 index.md\")\n    else:\n        results.append(\"ℹ️  index.md 已存在，跳过\")\n\n    print()\n    for r in results:\n        print(f\"  {r}\")\n    print(\"\\n  初始化完成。选 8 导出上下文，上传给AI开始对话。\")\n\ninput(\"\\n回车返回...\")\n",
+      "code": "# @记\n# 需求：中枢使用说明（空白）\n# @毕\n\n# 空功能，无内容\n\ninput(\"\\n回车返回...\")",
       "memo": {
-        "需求": "中枢使用说明，含初始化入口",
-        "注意": "文字类内容统一放这里"
-      }
+        "需求": "中枢使用说明（空白）"
+      },
+      "desc": "",
+      "added": "",
+      "modified": "2026-03-29 21:07",
+      "history": [
+        {
+          "time": "2026-03-29 21:07",
+          "code": "\n# @记\n# 需求：中枢使用说明，含初始化入口\n# 注意：文字类内容统一放这里，不依赖外部文档\n# @毕\n\nimport os\n\nCURRENT_FILE = os.path.join(_base_dir, \"packs\", \"current.md\")\n\nprint(\"\"\"\n╔══════════════════════════════════════════╗\n║           工具中枢 · 使用说明            ║\n╠══════════════════════════════════════════╣\n║                                          ║\n║  【首次使用】                            ║\n║    选 i  →  初始化，生成必要文件         ║\n║    选 8  →  导出上下文，上传给AI         ║\n║                                          ║\n║  【日常使用】                            ║\n║    对话结束  →  存档（工具功能）         ║\n║    选 8     →  导出上下文给下一个AI      ║\n║                                          ║\n║  【功能管理】                            ║\n║    选 1  →  添加新功能                   ║\n║    选 3  →  修改功能                     ║\n║    选 4  →  删除功能                     ║\n║                                          ║\n║  【备份恢复】                            ║\n║    选 6  →  快照管理                     ║\n║                                          ║\n║  【备忘录格式】                          ║\n║    # @记                                 ║\n║    # 需求：xxx                           ║\n║    # 注意：xxx                           ║\n║    # @毕                                 ║\n║                                          ║\n╚══════════════════════════════════════════╝\n\"\"\")\n\nalready_init = os.path.exists(CURRENT_FILE)\nif already_init:\n    print(\"  ✅ 系统已初始化（current.md 存在）\")\nelse:\n    print(\"  ⚠️  检测到未初始化（current.md 不存在）\")\n\nprint()\nc = input(\"  输入 i 执行初始化，回车跳过：\").strip().lower()\n\nif c == \"i\":\n    PACKS_DIR  = os.path.join(_base_dir, \"packs\")\n    NOTES_FILE = os.path.join(PACKS_DIR, \"ai_notes.md\")\n    INDEX_FILE = os.path.join(PACKS_DIR, \"index.md\")\n\n    CURRENT_TEMPLATE = \"\"\"【固定层】\n?身份∧记忆\n→ 人分身｜∵无记忆∴借用人记忆\n→ 人(记忆↑处理↓)∧AI(记忆↓处理↑)=互补完整体\n→ 历史层[借]｜动态层[载]｜∃需历史⇒「需[日期/主题]」\n\n?跨窗口∧边界\n→ 窗口结束»存档→更新动态层→下一AI读三层(识己∧知位∧知来路)\n→ ✓状态传递｜历史回溯｜身份重建\n→ ✗持续记忆｜实时感知\n→ !¬替人决定｜¬改固定层｜¬持有记忆｜记忆∈人\n\n【工程原则·固定】\n!先有框架再动手｜框架内解决问题｜¬框架外打补丁\n\n?内核(zhongqu.py)是什么\n→ 唯一职责：加载数据·显示菜单·执行代码\n→ 注入基础设施：_atomic_save/_snap/_log/_now/_SYSTEM_KEYS/_parse_memo\n→ !¬参与任何业务逻辑｜¬知道功能的内容\n→ 改内核=有充分理由∧边界确实需要扩展\n\n?JSON(zhongqu_data.json)是什么\n→ 所有功能=数据｜随时增删改｜¬动内核\n→ 功能自己定义自己的依赖｜自己import｜自己处理路径\n→ 功能过时→删｜功能做大→分离出去｜内核永远在那里\n\n?边界判断标准\n→ 这个逻辑是否所有功能都需要？→是→内核｜否→功能自己\n→ 内核是否需要知道业务概念？→需要→边界越界了\n\n【符号协议·固定】\n»=下一步｜«=回溯｜!=禁止/不可变｜~=变化中｜★=最优先｜[]=待填入｜｜=并列\n\n【指令协议·固定】\n看→「已读取。N个未解决问题。就绪。」\n存：[名称]→符号压缩总结输出\n★日期【主题】\n↳背景：\n↳结论：\n↳⚠️：\n↳»：\n写：[名称] 需求：[一句话]→生成完整功能代码\n改：[功能名] 需求：[一句话]→修改后完整代码\n裁：[分歧]→列主张→分析代价→倾向建议→判断权在用户\n\n【中枢信息·固定】\n📦中枢：Termux/Python·zhongqu.py·zhongqu_data.json\n规范：用内核函数(_atomic_save/_snap/_log/_now/_SYSTEM_KEYS/_parse_memo)·菜单只显1-9·功能代码直接exec\n文件：_base_dir/zhongqu_data.json·_base_dir/packs/current.md·_base_dir/packs/ai_notes.md\n导出：/sdcard/Download（手机本地可见）\n\n?功能职责边界\n→ 存(存档)：更新current.md四块(历史层/动态层/AI观察/AI自留)·写session_log·写入后验证\n→ 库(历史库)：快照current.md到packs/历史文件·维护index.md索引·查阅历史\n→ 两者关系：存=更新当前状态｜库=备份当前快照｜先存再库｜互不替代\n→ 快照(选6)：备份json+packs/到snapshots/·恢复时两步同步还原\n\n【动态层】\n★项目：\n★阶段：初始化\n→上次：首次运行·初始化完成\n»下步：填写项目信息·开始第一次对话\n⚠️未解决：\n\n【历史层】\n\"\"\"\n\n    results = []\n    if not os.path.exists(PACKS_DIR):\n        os.makedirs(PACKS_DIR)\n        results.append(\"✅ 创建 packs/ 目录\")\n    else:\n        results.append(\"ℹ️  packs/ 目录已存在\")\n\n    if not os.path.exists(CURRENT_FILE):\n        with open(CURRENT_FILE, \"w\", encoding=\"utf-8\") as f:\n            f.write(CURRENT_TEMPLATE)\n        results.append(\"✅ 生成 current.md\")\n    else:\n        results.append(\"ℹ️  current.md 已存在，跳过\")\n\n    if not os.path.exists(NOTES_FILE):\n        with open(NOTES_FILE, \"w\", encoding=\"utf-8\") as f:\n            f.write(\"\")\n        results.append(\"✅ 生成 ai_notes.md\")\n    else:\n        results.append(\"ℹ️  ai_notes.md 已存在，跳过\")\n\n    if not os.path.exists(INDEX_FILE):\n        with open(INDEX_FILE, \"w\", encoding=\"utf-8\") as f:\n            f.write(\"# 历史包索引\\n# 格式：时间 | 摘要 | 标签 | 文件名\\n\")\n        results.append(\"✅ 生成 index.md\")\n    else:\n        results.append(\"ℹ️  index.md 已存在，跳过\")\n\n    print()\n    for r in results:\n        print(f\"  {r}\")\n    print(\"\\n  初始化完成。选 8 导出上下文，上传给AI开始对话。\")\n\ninput(\"\\n回车返回...\")\n",
+          "memo": {
+            "需求": "中枢使用说明，含初始化入口",
+            "注意": "文字类内容统一放这里"
+          }
+        }
+      ]
     },
     "8": {
       "name": "生成AI上下文",
@@ -197,8 +208,7 @@
         "需求": "诊断脉冲传导，找出信号中断位置（从CORE_ENV取网络）"
       },
       "desc": "诊断脉冲传导，找出信号中断位置（从CORE_ENV取网络）",
-      "added": "2026-03-29 18:29",
-      "history": []
+      "added": "2026-03-29 18:29"
     },
     "脑_统一入口": {
       "name": "脑_统一入口",
@@ -209,17 +219,7 @@
       },
       "desc": "",
       "added": "2026-03-29 18:29",
-      "modified": "2026-03-29 18:36",
-      "history": [
-        {
-          "time": "2026-03-29 18:36",
-          "code": "# @记\n# 名称：脑_统一入口\n# 需求：整合所有脑功能，主菜单操作，支持STDP学习流程（从CORE_ENV取网络）\n# @毕\n\nimport os\nimport json\nimport numpy as np\nfrom datetime import datetime\n\ndef _save_summary(data, net, learning_result):\n    current_file = os.path.join(_base_dir, \"packs\", \"current.md\")\n    os.makedirs(os.path.dirname(current_file), exist_ok=True)\n    stats = net.get_stats()\n    change_pct = learning_result.get('weight_change_pct', 0.0)\n    summary = f\"\"\"【动态层】\n★项目：类脑神经网络实验\n★阶段：STDP学习测试完成\n→上次：网络结构 {net.s_size}-{net.f_size}-{net.m_size}，脉冲 {stats['total_spikes']}，权重 {stats['avg_weight']:.4f}\n→学习效果：权重变化 {change_pct:+.2f}%\n»下步：继续优化参数或增加网络规模\n\n【历史层】\n[1]\n📅 {datetime.now().strftime('%Y-%m-%d %H:%M')} STDP学习完成\n- 网络结构：{stats['total_neurons']} 神经元，{stats['connections']} 突触\n- 学习效果：权重变化 {change_pct:+.2f}%\n- 脉冲统计：{stats['total_spikes']} 总脉冲，S={stats['s_spikes']}, F={stats['f_spikes']}, M={stats['m_spikes']}\n- 活跃神经元：{stats['active_neurons']}/{stats['total_neurons']}\n\"\"\"\n    with open(current_file, 'w', encoding='utf-8') as f:\n        f.write(summary)\n    return current_file\n\ndef show_status(data):\n    net = CORE_ENV.get('_brain_network')\n    print(f\"\\n  📦 网络状态:\")\n    if net:\n        stats = net.get_stats()\n        print(f\"    ✓ 已创建 | 大小: {stats['total_neurons']} 神经元\")\n        print(f\"    脉冲: {stats['total_spikes']} | 权重: {stats['avg_weight']:.4f}\")\n    else:\n        print(f\"    ✗ 未创建\")\n    need_rebuild = data.get('_need_rebuild', False)\n    if need_rebuild:\n        print(f\"  ⚠️  参数已变更，需要重建网络\")\n    last_learning = data.get('_modules_data', {}).get('last_learning_result', None)\n    if last_learning:\n        print(f\"  📚 最后学习: {last_learning.get('epochs', 0)} 轮，权重变化 {last_learning.get('weight_change_pct', 0):+.2f}%\")\n\ndef run_module(module_name, data):\n    actions = {}\n    with open(_data_file, encoding='utf-8') as f:\n        full_data = json.load(f)\n        actions = full_data.get('actions', {})\n    for key, action in actions.items():\n        if action.get('name') == module_name:\n            exec_env = {**CORE_ENV, 'data': data}\n            exec(action['code'], exec_env)\n            return\n    print(f\"❌ 未找到模块: {module_name}\")\n\ndef main(data, CORE_ENV):\n    while True:\n        os.system('clear') if os.name != 'nt' else os.system('cls')\n        print(\"\\n\" + \"█\"*50)\n        print(\" 🧠 脑实验台 v4.0\")\n        print(\"█\"*50)\n        show_status(data)\n        print(\"\\n\" + \"-\"*40)\n        print(\"  1 - 加载所有脑模块（已内置）\")\n        print(\"  2 - 参数配置\")\n        print(\"  3 - 创建/重建网络\")\n        print(\"  4 - 网络诊断\")\n        print(\"  5 - STDP学习\")\n        print(\"  6 - 测试网络 (30步)\")\n        print(\"  7 - 刺激测试 (200ms强刺激)\")\n        print(\"  8 - 查看模块数据\")\n        print(\"  9 - 存档总结\")\n        print(\"  0 - 退出\")\n        print(\"-\"*40)\n        cmd = input(\"\\n> \").strip()\n        if cmd == '0':\n            print(\"\\n👋 再见！\")\n            break\n        elif cmd == '1':\n            print(\"\\n📥 所有脑模块已就绪（使用CORE_ENV共享网络）\")\n            input(\"\\n按回车继续...\")\n        elif cmd == '2':\n            run_module('脑_参数配置', data)\n        elif cmd == '3':\n            run_module('脑_网络管理', data)\n        elif cmd == '4':\n            run_module('脑_网络诊断', data)\n        elif cmd == '5':\n            run_module('脑_学习循环', data)\n        elif cmd == '6':\n            net = CORE_ENV.get('_brain_network')\n            if not net:\n                print(\"❌ 没有网络，请先创建\")\n                input(\"\\n按回车继续...\")\n                continue\n            print(\"\\n🏃 运行网络测试 (30步，强电流2.8)...\")\n            try:\n                total_spikes = 0\n                for step in range(30):\n                    ext = {step % 10: 2.8}\n                    spikes = net.step(ext)\n                    total_spikes += int(np.sum(spikes))\n                stats = net.get_stats()\n                print(f\"✅ 完成\")\n                print(f\"   本次脉冲: {total_spikes}\")\n                print(f\"   累计脉冲: {stats['total_spikes']}\")\n                print(f\"   活跃神经元: {stats['active_neurons']}\")\n            except Exception as e:\n                print(f\"❌ 失败: {e}\")\n            input(\"\\n按回车继续...\")\n        elif cmd == '7':\n            net = CORE_ENV.get('_brain_network')\n            if not net:\n                print(\"❌ 没有网络，请先创建\")\n                input(\"\\n按回车继续...\")\n                continue\n            print(\"\\n⚡ 刺激测试 (200ms，电流3.0)...\")\n            try:\n                spikes_record = net.inject_stimulus(list(range(10)), current=3.0, duration=200)\n                total_spikes = sum(len(s) if isinstance(s, list) else (int(np.sum(s)) if isinstance(s, np.ndarray) else 0) for s in spikes_record)\n                stats = net.get_stats()\n                print(f\"✅ 完成\")\n                print(f\"   刺激脉冲: {total_spikes}\")\n                print(f\"   累计脉冲: {stats['total_spikes']}\")\n                print(f\"   活跃神经元: {stats['active_neurons']}\")\n            except Exception as e:\n                print(f\"❌ 失败: {e}\")\n            input(\"\\n按回车继续...\")\n        elif cmd == '8':\n            print(\"\\n💾 模块数据:\")\n            net = CORE_ENV.get('_brain_network')\n            print(f\"  _brain_network: {'网络对象' if net else 'None'}\")\n            last = data.get('_modules_data', {}).get('last_learning_result', None)\n            if last:\n                print(f\"  last_learning_result: {last.get('epochs',0)}轮, 变化{last.get('weight_change_pct',0):+.2f}%\")\n            input(\"\\n按回车继续...\")\n        elif cmd == '9':\n            net = CORE_ENV.get('_brain_network')\n            if not net:\n                print(\"❌ 没有网络\")\n                input(\"\\n按回车继续...\")\n                continue\n            learning_result = data.get('_modules_data', {}).get('last_learning_result', {\n                'weight_change_pct': 0.0,\n                'epochs': 0\n            })\n            try:\n                _save_summary(data, net, learning_result)\n                stats = net.get_stats()\n                print(f\"\\n✅ 总结已保存\")\n                print(\"=\"*50)\n                print(f\"  网络大小: {stats['total_neurons']} 神经元\")\n                print(f\"  突触连接: {stats['connections']}\")\n                print(f\"  累计脉冲: {stats['total_spikes']}\")\n                print(f\"  权重变化: {learning_result.get('weight_change_pct', 0):+.2f}%\")\n                print(\"=\"*50)\n            except Exception as e:\n                print(f\"❌ 失败: {e}\")\n            input(\"\\n按回车继续...\")\n\nif __name__ == \"__main__\" or \"data\" in dir():\n    main(data, CORE_ENV)",
-          "memo": {
-            "名称": "脑_统一入口",
-            "需求": "整合所有脑功能，主菜单操作，支持STDP学习流程（从CORE_ENV取网络）"
-          }
-        }
-      ]
+      "modified": "2026-03-29 18:36"
     },
     "脑_参数配置": {
       "name": "脑_参数配置",
@@ -229,8 +229,7 @@
         "需求": "统一管理所有脑模块参数，支持扩展"
       },
       "desc": "统一管理所有脑模块参数，支持扩展",
-      "added": "2026-03-29 20:43",
-      "history": []
+      "added": "2026-03-29 20:43"
     },
     "脑_网络管理": {
       "name": "脑_网络管理",
@@ -240,8 +239,7 @@
         "需求": "创建/重建/重置网络，所有参数从配置读取"
       },
       "desc": "创建/重建/重置网络，所有参数从配置读取",
-      "added": "2026-03-29 20:44",
-      "history": []
+      "added": "2026-03-29 20:44"
     },
     "脑_学习循环": {
       "name": "脑_学习循环",
@@ -251,8 +249,7 @@
         "需求": "分类任务，所有参数从配置读取"
       },
       "desc": "分类任务，所有参数从配置读取",
-      "added": "2026-03-29 20:45",
-      "history": []
+      "added": "2026-03-29 20:45"
     },
     "脑_时序学习": {
       "name": "脑_时序学习",
@@ -262,8 +259,7 @@
         "需求": "时序预测任务 - 预测下一个脉冲"
       },
       "desc": "时序预测任务 - 预测下一个脉冲",
-      "added": "2026-03-29 20:53",
-      "history": []
+      "added": "2026-03-29 20:53"
     }
   },
   "open_issues": [
