@@ -1,5 +1,5 @@
 {
-  "version": "2.3",
+  "version": "2.7",
   "exit_key": "0",
   "banner": [
     "=============================================",
@@ -84,14 +84,13 @@
     },
     "7": {
       "name": "说明",
-      "code": "# @记\n# 需求：中枢使用说明（空白）\n# @毕\n\n# 空功能，无内容\n\ninput(\"\\n回车返回...\")",
+      "code": "# @记\n# 需求：中枢使用说明\n# @毕\n\ndef _run():\n    print(\"\"\"\n=== 中枢使用说明 ===\n\n1. 添加功能: 粘贴带 # @记 ... # @毕 的代码\n2. 运行/修改/删除: 管理工具\n3. 快照管理: 自动备份，可回滚\n4. 云同步: Gitee + GitHub，token本地保存\n5. 协议编辑: 管理第四层协议\n6. 清理模块: 清理垃圾数据\n\n详细规范: 执行 8. 生成AI上下文\n\"\"\")\n    input('\\n回车返回...')\n\n_run()",
       "memo": {
-        "需求": "中枢使用说明（空白）"
+        "需求": "中枢使用说明",
+        "注意": "简洁版，让用户30秒知道能干什么"
       },
-      "desc": "",
-      "added": "",
-      "modified": "2026-03-29 21:07",
-      "history": []
+      "desc": "中枢使用说明",
+      "added": ""
     },
     "8": {
       "name": "生成AI上下文",
@@ -185,7 +184,7 @@
       "code": "# @记\n# 需求：扫描并清理 JSON 中的孤儿字段、history、日志\n# 注意：v2.3 清理模块——终版，增加并发删除防御\n# @毕\n\nimport re\n\n# ==================== 1. 版本锁 ====================\nif _version != \"2.4\":\n    print(f\"\\n⚠️ 版本警报：清理模块为 v2.4 设计，当前内核 {_version}\")\n    if input(\"   确认架构兼容并继续？(y/n): \").strip().lower() != \"y\":\n        exit()\n\n# ==================== 2. 标准字段（内核法典）====================\nSTANDARD_KEYS = {\n    \"version\", \"exit_key\", \"banner\", \"menu\", \"footer\",\n    \"goal\", \"actions\", \"operation_log\"\n}\n\n# ==================== 3. 引用计数函数 ====================\ndef get_ref_count(field_name):\n    \"\"\"返回引用该顶层字段的模块数量，安全优先——宁可误报不可漏报\"\"\"\n    count = 0\n    ref_modules = []\n    patterns = (f\"'{field_name}'\", f'\"{field_name}\"')\n    for key, action in data.get(\"actions\", {}).items():\n        code = action.get(\"code\", \"\")\n        if any(p in code for p in patterns):\n            count += 1\n            ref_modules.append(action.get(\"name\", key))\n    return count, ref_modules\n\n# ==================== 4. 主逻辑 ====================\nprint(\"\\n\" + \"=\" * 56)\nprint(\"🧹 JSON 数据清理工具 v2.3\")\nprint(\"=\" * 56)\n\n# ---- 扫描阶段 ----\norphan_keys = []\nbig_history = []\nlog_count = len(data.get(\"operation_log\", []))\n\n# 1. 孤儿顶层字段（使用 list(data) 防止遍历时修改）\nfor k in list(data):\n    if k not in STANDARD_KEYS:\n        val = data[k]\n        size = len(str(val))\n        ref_count, ref_modules = get_ref_count(k)\n        orphan_keys.append((k, type(val).__name__, size, ref_count, ref_modules))\n\n# 2. 有 history 的模块\nfor key, action in data.get(\"actions\", {}).items():\n    h = action.get(\"history\", [])\n    if h:\n        big_history.append((key, action.get(\"name\", key), len(h)))\n\n# ---- 报告 ----\nraw_size = len(json.dumps(data, ensure_ascii=False))\nprint(f\"\\n当前 JSON 大小：{raw_size:,} 字节\")\nprint(f\"operation_log：{log_count} 条\")\nprint(f\"孤儿顶层字段：{len(orphan_keys)} 个\")\nprint(f\"有 history 的模块：{len(big_history)} 个\")\n\nif not orphan_keys and not big_history and log_count <= 50:\n    print(\"\\n✅ 数据文件很干净，无需清理。\")\n    input(\"\\n回车返回...\")\nelse:\n    to_delete_keys = []\n    new_log_count = log_count\n    clear_histories = []\n\n    # ---- 孤儿字段 ----\n    if orphan_keys:\n        print(\"\\n─── 孤儿顶层字段 ───\")\n        for k, t, size, ref_count, ref_modules in orphan_keys:\n            print(f\"\\n  [{k}]  类型:{t}  大小:{size}字节\")\n            print(f\"    预览: {str(data[k])[:60]}\")\n            if ref_count > 0:\n                print(f\"    📎 引用计数：{ref_count} 个模块引用此字段\")\n                print(f\"       引用者：{', '.join(ref_modules[:3])}\")\n                if ref_count > 3:\n                    print(f\"       等 {ref_count} 个模块\")\n                print(f\"    ⚠️ 删除可能导致这些模块功能异常\")\n            ans = input(\"    删除？(y/n)：\").strip().lower()\n            if ans == \"y\":\n                to_delete_keys.append(k)\n\n    # ---- history 清理 ----\n    if big_history:\n        print(\"\\n─── 模块 history 记录 ───\")\n        for key, name, cnt in big_history:\n            print(f\"  [{name}]  {cnt} 条修改历史\")\n            ans = input(f\"    清空 history？(y/n)：\").strip().lower()\n            if ans == \"y\":\n                clear_histories.append(key)\n\n    # ---- operation_log 截断 ----\n    if log_count > 50:\n        print(f\"\\n─── operation_log（当前 {log_count} 条）───\")\n        print(\"  保留最新多少条？(直接回车=不动，输入数字=截断)\")\n        ans = input(\"  保留条数：\").strip()\n        if ans.isdigit():\n            new_log_count = int(ans)\n\n    # ---- 确认执行 ----\n    will_do = to_delete_keys or clear_histories or (new_log_count < log_count)\n    if not will_do:\n        print(\"\\n没有选择任何清理项，已取消。\")\n    else:\n        print(\"\\n─── 即将执行 ───\")\n        if to_delete_keys:\n            print(f\"  删除字段：{', '.join(to_delete_keys)}\")\n        if clear_histories:\n            # 防御：防止扫描后到执行前期间 actions 被修改\n            names = [data.get(\"actions\", {}).get(k, {}).get(\"name\", k) for k in clear_histories]\n            print(f\"  清空 history：{', '.join(names)}\")\n        if new_log_count < log_count:\n            print(f\"  operation_log：{log_count} → {new_log_count} 条\")\n\n        ans = input(\"\\n确认执行？(y/n)：\").strip().lower()\n        if ans == \"y\":\n            _snap()\n\n            for k in to_delete_keys:\n                del data[k]\n\n            # 防御：清空前检查 key 是否还存在\n            for key in clear_histories:\n                if key in data.get(\"actions\", {}):\n                    data[\"actions\"][key][\"history\"] = []\n\n            if new_log_count < log_count:\n                if new_log_count == 0:\n                    data[\"operation_log\"] = []\n                else:\n                    data[\"operation_log\"] = data[\"operation_log\"][-new_log_count:]\n\n            # 日志摘要：截断过长的字段列表\n            fields_txt = \", \".join(to_delete_keys) if to_delete_keys else \"无\"\n            if len(fields_txt) > 50:\n                fields_txt = fields_txt[:47] + \"...\"\n            \n            summary = f\"清理垃圾：删字段[{fields_txt}]，清空{len(clear_histories)}个history，日志保留{new_log_count}条\"\n            _log(data, summary)\n            _atomic_save(data)\n\n            new_size = len(json.dumps(data, ensure_ascii=False))\n            saved = raw_size - new_size\n            print(f\"\\n✅ 清理完成\")\n            print(f\"   清理前：{raw_size:,} 字节\")\n            print(f\"   清理后：{new_size:,} 字节\")\n            print(f\"   释放：{saved:,} 字节\")\n        else:\n            print(\"\\n已取消。\")\n\ninput(\"\\n回车返回...\")",
       "memo": {
         "需求": "扫描并清理 JSON 中的孤儿字段、history、日志",
-        "注意": "v2.4 版本锁已更新，增加日志清零修复，并发删除防御"
+        "注意": "v2.7 版本锁已更新，增加日志清零修复，并发删除防御"
       },
       "desc": "扫描并清理 JSON 中的孤儿字段、history、日志",
       "added": "2026-04-04 23:15",
